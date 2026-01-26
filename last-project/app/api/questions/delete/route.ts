@@ -1,19 +1,21 @@
-import CategoryModel from "@/db/models/CategoryModels";
+import QuestionModel from "@/db/models/QuestionModels";
 import { NextResponse } from "next/server";
 
 export async function DELETE(request: Request) {
     try {
         const formData = await request.formData();
         const id = formData.get("id") as string;
+        
         if (!id) {
             return NextResponse.json(
-                { message: "Category ID is required for deletion." },
+                { message: "Question ID is required for deletion." },
                 { status: 400 }
             );
         }
-        await CategoryModel.deleteCategory(id);
+        
+        await QuestionModel.deleteQuestion(id);
         return NextResponse.json(
-            { message: `Category with ID '${id}' deleted successfully!` },
+            { message: `Question with ID '${id}' deleted successfully!` },
             { status: 200 }
         );
     } catch (error) {

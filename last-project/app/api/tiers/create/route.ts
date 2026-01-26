@@ -1,17 +1,19 @@
-import CategoryModel from "@/db/models/CategoryModels";
+import TierModel from "@/db/models/TierModels";
 import { NextResponse } from "next/server";
 
-export async function PUT(request: Request) {
+export async function POST(request: Request) {
     try {
         const formData = await request.formData();
-        const id = formData.get("id") as string;
         const title = formData.get("title") as string;
+        const price = Number(formData.get("price"));
+        const benefits = (formData.get("benefits") as string).split(",");
+        const quota = Number(formData.get("quota"));
         const description = formData.get("description") as string;
-
-        await CategoryModel.updateCategory(id, { title, description });
+        
+        await TierModel.createTier(title, price, benefits, quota, description);
         return NextResponse.json(
-            { message: `Category with ID '${id}' updated successfully!` },
-            { status: 200 }
+            { message: `Tier '${title}' created successfully!` },
+            { status: 201 }
         );
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

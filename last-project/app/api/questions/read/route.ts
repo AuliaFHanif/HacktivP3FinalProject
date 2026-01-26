@@ -1,17 +1,18 @@
-import CategoryModel from "@/db/models/CategoryModels";
+import QuestionModel from "@/db/models/QuestionModels";
 import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        const categories = await CategoryModel.getCategories();
+        const questions = await QuestionModel.getQuestions();
         
-        const serializedCategories = categories.map(category => ({
-            ...category,
-            _id: category._id?.toString()
+        const serializedQuestions = questions.map(question => ({
+            ...question,
+            _id: question._id?.toString(),
+            categoryID: question.categoryID?.toString()
         }));
         
         return NextResponse.json(
-            { success: true, data: serializedCategories },
+            { success: true, data: serializedQuestions },
             { status: 200 }
         );
     } catch (error) {

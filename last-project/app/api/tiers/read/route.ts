@@ -1,17 +1,17 @@
-import CategoryModel from "@/db/models/CategoryModels";
+import TierModel from "@/db/models/TierModels";
 import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        const categories = await CategoryModel.getCategories();
+        const tiers = await TierModel.getTiers();
         
-        const serializedCategories = categories.map(category => ({
-            ...category,
-            _id: category._id?.toString()
+        const serializedTiers = tiers.map(tier => ({
+            ...tier,
+            _id: tier._id?.toString()
         }));
         
         return NextResponse.json(
-            { success: true, data: serializedCategories },
+            { success: true, data: serializedTiers },
             { status: 200 }
         );
     } catch (error) {
