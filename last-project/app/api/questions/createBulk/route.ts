@@ -7,7 +7,7 @@ const openai = new OpenAI({
 });
 
 interface BulkQuestionInput {
-  categoryId: string; // ObjectId string for the category
+  categoryID: string; // ObjectId string for the category
   level: string;
   type: string;
   count?: number; // Number of questions to generate, default 10
@@ -25,8 +25,8 @@ export async function generateBulkQuestions(input: BulkQuestionInput) {
     if (!process.env.OPENAI_API_KEY) {
         throw new Error("OpenAI API key is not configured.");
     }
-    if (!input.categoryId || !input.level || !input.type) {
-        throw new Error("Missing required fields: categoryId, level, type");
+    if (!input.categoryID || !input.level || !input.type) {
+      throw new Error("Missing required fields: categoryID, level, type");
     }
     if (!VALID_LEVELS.includes(input.level)) {
         throw new Error(`Invalid level value. Must be one of: ${VALID_LEVELS.join(", ")}`);
@@ -35,7 +35,7 @@ export async function generateBulkQuestions(input: BulkQuestionInput) {
         throw new Error(`Invalid type value. Must be one of: ${VALID_TYPES.join(", ")}`);
     }
     
-  const { categoryId, level, type, count = 10 } = input;
+  const { categoryID, level, type, count = 10 } = input;
 
   try {
     // Call OpenAI API to generate questions
@@ -99,7 +99,7 @@ Make sure each question is unique, relevant to the level and type specified, and
       try {
         const question = generatedQuestions[i];
         const created = await QuestionModel.createQuestion(
-          categoryId,
+          categoryID,
           level,
           type,
           question.content,
@@ -132,22 +132,19 @@ Make sure each question is unique, relevant to the level and type specified, and
 // API route handler
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const categoryId = formData.get("categoryId") as string;
-    const level = formData.get("level") as string;
-    const type = formData.get("type") as string;
-    const countStr = formData.get("count") as string | null;
-    const count = countStr ? parseInt(countStr, 10) : 10;
+    const body = await request.json();
+    const { categoryID, level, type, count: rawCount } = body ?? {};
+    const count = rawCount ? parseInt(rawCount, 10) : 10;
 
-    if (!categoryId || !level || !type) {
+    if (!categoryID || !level || !type) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: categoryId, level, type" },
+        { success: false, error: "Missing required fields: categoryID, level, type" },
         { status: 400 }
       );
     }
 
     const result = await generateBulkQuestions({
-      categoryId,
+      categoryID,
       level,
       type,
       count,
