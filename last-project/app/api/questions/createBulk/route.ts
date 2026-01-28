@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 interface BulkQuestionInput {
-  categoryID: string; // ObjectId string for the category
+  categoryId: string; // ObjectId string for the category
   level: string;
   type: string;
   count?: number; // Number of questions to generate, default 10
@@ -23,8 +23,8 @@ export async function generateBulkQuestions(input: BulkQuestionInput) {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error("Gemini API key is not configured.");
     }
-    if (!input.categoryID || !input.level || !input.type) {
-      throw new Error("Missing required fields: categoryID, level, type");
+    if (!input.categoryId || !input.level || !input.type) {
+      throw new Error("Missing required fields: categoryId, level, type");
     }
     if (!VALID_LEVELS.includes(input.level)) {
         throw new Error(`Invalid level value. Must be one of: ${VALID_LEVELS.join(", ")}`);
@@ -33,7 +33,7 @@ export async function generateBulkQuestions(input: BulkQuestionInput) {
         throw new Error(`Invalid type value. Must be one of: ${VALID_TYPES.join(", ")}`);
     }
     
-  const { categoryID, level, type, count = 10 } = input;
+  const { categoryId, level, type, count = 10 } = input;
 
   try {
     // Initialize Gemini model
@@ -88,7 +88,7 @@ Hasilkan ${count} pertanyaan sekarang:`;
     // Return generated questions without inserting to database
     // Questions will be inserted later via insertBulk endpoint when user submits
     const questionsWithMetadata = generatedQuestions.map(q => ({
-      categoryID,
+      categoryId,
       level,
       type,
       content: q.content,
@@ -111,36 +111,36 @@ Hasilkan ${count} pertanyaan sekarang:`;
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") || "";
-    let categoryID = "";
+    let categoryId = "";
     let level = "";
     let type = "";
     let count = 10;
 
     if (contentType.includes("application/x-www-form-urlencoded")) {
       const formData = await request.formData();
-      categoryID = formData.get("categoryID")?.toString() || "";
+      categoryId = formData.get("categoryId")?.toString() || "";
       level = formData.get("level")?.toString() || "";
       type = formData.get("type")?.toString() || "";
       const countStr = formData.get("count")?.toString();
       count = countStr ? parseInt(countStr, 10) : 10;
     } else {
       const body = await request.json();
-      categoryID = body?.categoryID || "";
+      categoryId = body?.categoryId || "";
       level = body?.level || "";
       type = body?.type || "";
       const countStr = body?.count;
       count = countStr ? parseInt(countStr, 10) : 10;
     }
 
-    if (!categoryID || !level || !type) {
+    if (!categoryId || !level || !type) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: categoryID, level, type" },
+        { success: false, error: "Missing required fields: categoryId, level, type" },
         { status: 400 }
       );
     }
 
     const result = await generateBulkQuestions({
-      categoryID,
+      categoryId,
       level,
       type,
       count,

@@ -114,70 +114,105 @@ export default function CategoryManagement() {
   };
 
   // 3. Handle Delete (DELETE)
-  const handleDelete = async (id: string) => {
-    try {
-      // Check if any questions have this category
-      const questionsRes = await fetch("/api/questions/read");
-      const questionsData = await questionsRes.json();
-      const questionsWithCategory = questionsData.questions?.filter((q: any) => q.categoryId?.$oid === id || q.categoryId === id) || [];
+const handleDelete = async (id: string) => {
+  try {
+    // Check if any questions have this category
+    const questionsRes = await fetch("/api/questions/read");
+    
+    if (!questionsRes.ok) {
+      throw new Error("Failed to fetch questions");
+    }
+    
+    const questionsData = await questionsRes.json();
+    
+    if (!questionsData.questions) {
+      throw new Error("Failed to fetch questions");
+    }
 
-      if (questionsWithCategory.length > 0) {
-        Swal.fire({
-          title: "Cannot Delete Category",
-          text: `This category has ${questionsWithCategory.length} question(s) associated with it. Please delete or reassign these questions first.`,
-          icon: "error",
-          confirmButtonColor: "#3b82f6",
-        });
-        return;
+    // Compare categoryId - handle both string and ObjectId formats
+    const questionsWithCategory = questionsData.questions.filter((q: any) => {
+      // Handle different possible formats of categoryId
+      let qCategoryId: string;
+      
+      if (typeof q.categoryId === 'string') {
+        qCategoryId = q.categoryId;
+      } else if (q.categoryId?.$oid) {
+        // MongoDB extended JSON format
+        qCategoryId = q.categoryId.$oid;
+      } else if (q.categoryId?._id) {
+        // ObjectId with _id property
+        qCategoryId = typeof q.categoryId._id === 'string' 
+          ? q.categoryId._id 
+          : q.categoryId._id.toString();
+      } else if (typeof q.categoryId?.toString === 'function') {
+        // ObjectId with toString method
+        qCategoryId = q.categoryId.toString();
+      } else {
+        return false;
       }
+      
+      return qCategoryId === id;
+    });
 
+    if (questionsWithCategory.length > 0) {
       Swal.fire({
-        title: "Delete Category",
-        text: "Are you sure you want to delete this category?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc2626",
-        cancelButtonColor: "#6b7280",
-        confirmButtonText: "Yes, delete it!",
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            const body = new FormData();
-            body.append("id", id);
-            const res = await fetch("/api/category/delete", { method: "DELETE", body });
-            if (res.ok) {
-              fetchCategories();
-              Swal.fire({
-                icon: "success",
-                title: "Deleted",
-                text: "Category deleted successfully!",
-                confirmButtonColor: "#3b82f6",
-                timer: 1500,
-                showConfirmButton: false,
-              });
-            } else {
-              throw new Error("Failed to delete category");
-            }
-          } catch (error) {
-            Swal.fire({
-              icon: "error",
-              title: "Delete Failed",
-              text: error instanceof Error ? error.message : "Failed to delete category",
-              confirmButtonColor: "#3b82f6",
-            });
-          }
-        }
-      });
-    } catch (error) {
-      Swal.fire({
+        title: "Cannot Delete Category",
+        html: `
+          <p>This category has <strong>${questionsWithCategory.length}</strong> question(s) associated with it.</p>
+          <p class="mt-2">Please delete or reassign these questions first.</p>
+        `,
         icon: "error",
-        title: "Delete Failed",
-        text: error instanceof Error ? error.message : "Failed to check questions",
         confirmButtonColor: "#3b82f6",
       });
+      return;
     }
-  };
 
+    Swal.fire({
+      title: "Delete Category",
+      text: "Are you sure you want to delete this category?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const body = new FormData();
+          body.append("id", id);
+          const res = await fetch("/api/category/delete", { method: "DELETE", body });
+          if (res.ok) {
+            fetchCategories();
+            Swal.fire({
+              icon: "success",
+              title: "Deleted",
+              text: "Category deleted successfully!",
+              confirmButtonColor: "#3b82f6",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          } else {
+            throw new Error("Failed to delete category");
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: "error",
+            title: "Delete Failed",
+            text: error instanceof Error ? error.message : "Failed to delete category",
+            confirmButtonColor: "#3b82f6",
+          });
+        }
+      }
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Delete Failed",
+      text: error instanceof Error ? error.message : "Failed to check questions",
+      confirmButtonColor: "#3b82f6",
+    });
+  }
+};
   // 4. Handle Publish/Unpublish
   const handlePublishToggle = async (cat: Category) => {
     try {
@@ -253,6 +288,7 @@ export default function CategoryManagement() {
                       <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100 focus-within:border-blue-400 transition">
                         <ImageIcon className="text-slate-400 w-5 h-5" />
                         <input 
+                        required
                           className="bg-transparent outline-none w-full text-sm" 
                           placeholder="https://..." 
                           value={formData.imgUrl}
@@ -353,6 +389,7 @@ export default function CategoryManagement() {
                       published: cat.published || false
                     });
                     setIsAdding(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   onDelete={() => handleDelete(cat._id)}
                   onTogglePublish={() => handlePublishToggle(cat)}

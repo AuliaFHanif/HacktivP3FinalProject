@@ -2,24 +2,24 @@ import QuestionModel from "@/db/models/QuestionModels";
 import CategoryModel from "@/db/models/CategoryModels";
 import { NextResponse } from "next/server";
 
-async function updateCategoryLevelIfReady(categoryID: string, level: string) {
+async function updateCategoryLevelIfReady(categoryId: string, level: string) {
 	try {
 		// Convert level names to match category schema (middle instead of mid)
 		const categoryLevelKey = level === "mid" ? "middle" : level;
 		
 		// Count questions for this category and level
-		const count = await QuestionModel.countQuestionsByCategoryAndLevel(categoryID, level);
+		const count = await QuestionModel.countQuestionsByCategoryAndLevel(categoryId, level);
 		
 		// If there are at least 15 questions, update category level
 		if (count >= 15) {
-			const category = await CategoryModel.getCategoryById(categoryID);
+			const category = await CategoryModel.getCategoryById(categoryId);
 			if (category) {
 				const updatedLevel = {
 					...category.level,
 					[categoryLevelKey]: true
 				};
-				await CategoryModel.updateCategory(categoryID, { level: updatedLevel });
-				console.log(`Category ${categoryID} level ${level} marked as ready (${count} questions found)`);
+				await CategoryModel.updateCategory(categoryId, { level: updatedLevel });
+				console.log(`Category ${categoryId} level ${level} marked as ready (${count} questions found)`);
 			}
 		}
 	} catch (error) {
@@ -31,7 +31,7 @@ async function updateCategoryLevelIfReady(categoryID: string, level: string) {
 export async function POST(request: Request) {
     try {
         const contentType = request.headers.get("content-type") || "";
-        let categoryID = "";
+        let categoryId = "";
         let level = "";
         let type = "";
         let content = "";
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
         if (contentType.includes("application/x-www-form-urlencoded")) {
             const formData = await request.formData();
-            categoryID = formData.get("categoryID")?.toString() || "";
+            categoryId = formData.get("categoryId")?.toString() || "";
             level = formData.get("level")?.toString() || "";
             type = formData.get("type")?.toString() || "";
             content = formData.get("content")?.toString() || "";
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
             audioUrl = formData.get("audioUrl")?.toString() || "";
         } else {
             const body = await request.json();
-            categoryID = body?.categoryID || "";
+            categoryId = body?.categoryId || "";
             level = body?.level || "";
             type = body?.type || "";
             content = body?.content || "";
@@ -56,17 +56,17 @@ export async function POST(request: Request) {
             audioUrl = body?.audioUrl || "";
         }
 
-        if (!categoryID || !level || !type || !content) {
+        if (!categoryId || !level || !type || !content) {
             return NextResponse.json(
-                { message: "Missing required fields: categoryID, level, type, content" },
+                { message: "Missing required fields: categoryId, level, type, content" },
                 { status: 400 }
             );
         }
 
-        await QuestionModel.createQuestion(categoryID, level, type, content, Boolean(followUp), audioUrl);
+        await QuestionModel.createQuestion(categoryId, level, type, content, Boolean(followUp), audioUrl);
 
         // Check if category level should be marked as ready
-        await updateCategoryLevelIfReady(categoryID, level);
+        await updateCategoryLevelIfReady(categoryId, level);
 
         return NextResponse.json({ message: "Question created successfully!" }, { status: 201 });
     } catch (error) {

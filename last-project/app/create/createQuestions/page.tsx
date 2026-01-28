@@ -1,26 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import {
-  Search,
-  MapPin,
-  PlusCircle,
-  Database,
-  CheckCircle,
   Loader2,
-  LayoutGrid,
   HelpCircle,
-  Layers,
-  Settings,
-  LogOut,
   Trash2,
   Send,
-  Plus,
+  Database,
+  PlusCircle,
 } from "lucide-react";
 import AdminProtection from "@/components/AdminProtection";
-import { logout } from "@/lib/auth";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 interface Question {
   _id?: string;
@@ -46,36 +37,24 @@ interface Category {
 }
 
 export default function BulkQuestionsPage() {
-  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("Questions");
-
-  // Form inputs
-  const [categoryId, setCategoryId] = useState("");
-  const [level, setLevel] = useState("");
-  const [type, setType] = useState("");
-  const [count, setCount] = useState(10);
+  const [activeTab, setActiveTab] = useState("Create Questions");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [questionContent, setQuestionContent] = useState("");
   const [followUp, setFollowUp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<"individual" | "bulk">("individual");
-
-  const menuItems = [
-    { name: "Categories", icon: LayoutGrid, path: "/categories" },
-    { name: "Questions", icon: HelpCircle, path: "/questions" },
-    { name: "Tiers", icon: Layers, path: "/tiers" },
-    { name: "Create Questions", icon: PlusCircle, path: "/createQuestions" },
-    { name: "Packages", icon: Plus, path: "/packages" },
-  ];
+  const [categoryId, setCategoryId] = useState("");
+  const [level, setLevel] = useState("");
+  const [type, setType] = useState("");
+  const [count, setCount] = useState(10);
 
   const handleNavigation = (path: string, name: string) => {
     setActiveTab(name);
-    router.push(path);
   };
 
   // Fetch categories on mount
@@ -353,66 +332,19 @@ export default function BulkQuestionsPage() {
   return (
     <AdminProtection>
       <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
-        {/* --- SIDEBAR --- */}
-        <aside className="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full">
-          <div className="p-6 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">
-              S
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-800">
-              Seekers.
-            </span>
-          </div>
+        <AdminSidebar activeTab={activeTab} onNavigate={handleNavigation} />
 
-          <nav className="flex-1 px-4 py-4 space-y-1">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-4">
-              Main Menu
-            </div>
-            {menuItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleNavigation(item.path, item.name)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === item.name
-                    ? "bg-blue-50 text-blue-600 shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                }`}
-              >
-                <item.icon
-                  className={`w-5 h-5 ${activeTab === item.name ? "text-blue-600" : "text-slate-400"}`}
-                />
-                {item.name}
-              </button>
-            ))}
-          </nav>
-
-          <div className="p-4 border-t border-slate-100 space-y-1">
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition"
-            >
-              <LogOut className="w-5 h-5" /> Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* --- MAIN CONTENT AREA --- */}
         <main className="flex-1 ml-64 p-8">
-          {/* Header bar */}
-          <header className="flex justify-between items-center mb-10">
-            <div>
-              <h2 className="text-sm font-medium text-slate-400">
-                Dashboard / {activeTab}
-              </h2>
-              <h1 className="text-2xl font-bold text-slate-800">
-                Bulk Management
-              </h1>
-            </div>
-            
-          </header>
-
-          {/* Content Section (Questions UI) */}
           <div className="max-w-5xl">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                Bulk Question Management
+              </h1>
+              <p className="text-slate-500 text-sm">
+                Create individual or generate questions in bulk.
+              </p>
+            </div>
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700 text-sm">
@@ -555,12 +487,6 @@ export default function BulkQuestionsPage() {
                 <p className="text-sm text-slate-600 mb-4">
                   AI will generate questions based on your criteria
                 </p>
-                {questions.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-blue-700 text-sm">
-                    You have {questions.length} question(s). You can add up to{" "}
-                    {20 - questions.length} more questions (maximum 20 total).
-                  </div>
-                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-600 mb-2">

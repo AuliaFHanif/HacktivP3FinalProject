@@ -2,24 +2,24 @@ import QuestionModel from "@/db/models/QuestionModels";
 import CategoryModel from "@/db/models/CategoryModels";
 import { NextResponse } from "next/server";
 
-async function updateCategoryLevelIfReady(categoryID: string, level: string) {
+async function updateCategoryLevelIfReady(categoryId: string, level: string) {
 	try {
 		// Convert level names to match category schema (middle instead of mid)
 		const categoryLevelKey = level === "mid" ? "middle" : level;
 		
 		// Count questions for this category and level
-		const count = await QuestionModel.countQuestionsByCategoryAndLevel(categoryID, level);
+		const count = await QuestionModel.countQuestionsByCategoryAndLevel(categoryId, level);
 		
 		// If there are at least 15 questions, update category level
 		if (count >= 15) {
-			const category = await CategoryModel.getCategoryById(categoryID);
+			const category = await CategoryModel.getCategoryById(categoryId);
 			if (category) {
 				const updatedLevel = {
 					...category.level,
 					[categoryLevelKey]: true
 				};
-				await CategoryModel.updateCategory(categoryID, { level: updatedLevel });
-				console.log(`Category ${categoryID} level ${level} marked as ready (${count} questions found)`);
+				await CategoryModel.updateCategory(categoryId, { level: updatedLevel });
+				console.log(`Category ${categoryId} level ${level} marked as ready (${count} questions found)`);
 			}
 		}
 	} catch (error) {
@@ -62,12 +62,12 @@ export async function POST(request: Request) {
 			const q = questions[i];
 			try {
 				const question = await QuestionModel.createQuestion(
-					q.categoryID,
-					q.level,
-					q.type,
-					q.content,
-					Boolean(q.followUp),
-					q.audioUrl
+					(q as any).categoryId,
+					(q as any).level,
+					(q as any).type,
+					(q as any).content,
+					Boolean((q as any).followUp),
+					(q as any).audioUrl
 				);
 				created.push(question);
 			} catch (err) {
@@ -84,15 +84,15 @@ export async function POST(request: Request) {
 			// Get unique category ID and level combinations
 			const categoryLevelSet = new Set<string>();
 			for (const question of created) {
-				if (question.categoryID) {
-					categoryLevelSet.add(`${question.categoryID}:${question.level}`);
+				if (question.categoryId) {
+					categoryLevelSet.add(`${question.categoryId}:${question.level}`);
 				}
 			}
 
 			// Check each combination and update category if needed
 			for (const combo of categoryLevelSet) {
-				const [categoryID, level] = combo.split(":");
-				await updateCategoryLevelIfReady(categoryID, level);
+				const [categoryId, level] = combo.split(":");
+				await updateCategoryLevelIfReady(categoryId, level);
 			}
 		}
 

@@ -4,7 +4,7 @@ import * as Z from "zod";
 
 export const QuestionSchema = Z.object({
   _id: Z.instanceof(ObjectId).optional(),
-  categoryID: Z.instanceof(ObjectId),
+  categoryId: Z.instanceof(ObjectId),
   level: Z.string().min(1, "Level is required"),
   type: Z.string().min(1, "Type is required"),
   content: Z.string().min(1, "Content is required").max(1000, "Content cannot exceed 1000 characters"),
@@ -18,7 +18,7 @@ export const QuestionCollection = database.collection<Question>("questions");
 
 class QuestionModel {
   static async createQuestion(
-    categoryID: string,
+    categoryId: string,
     level: string,
     type: string,
     content: string,
@@ -26,13 +26,13 @@ class QuestionModel {
     audioUrl?: string | null
   ): Promise<Question> {
     try {
-      // Validate categoryID
-      if (!ObjectId.isValid(categoryID)) {
+      // Validate categoryId
+      if (!ObjectId.isValid(categoryId)) {
         throw new Error("Invalid category ID format");
       }
 
       const questionData = QuestionSchema.parse({
-        categoryID: new ObjectId(categoryID),
+        categoryId: new ObjectId(categoryId),
         level,
         type,
         content,
@@ -65,14 +65,14 @@ class QuestionModel {
     }
   }
   
-  static async getQuestionsByCategory(categoryID: string): Promise<Question[]> {
+  static async getQuestionsByCategory(categoryId: string): Promise<Question[]> {
     try {
-      if (!ObjectId.isValid(categoryID)) {
+      if (!ObjectId.isValid(categoryId)) {
         throw new Error("Invalid category ID format");
       }
       
       const questions = await QuestionCollection.find({ 
-        categoryID: new ObjectId(categoryID) 
+        categoryId: new ObjectId(categoryId) 
       }).toArray();
       
       return questions;
@@ -89,12 +89,12 @@ class QuestionModel {
       
       const { _id, ...updateData } = question;
       
-      // If categoryID is being updated, validate and convert it
-      if (updateData.categoryID && typeof updateData.categoryID === 'string') {
-        if (!ObjectId.isValid(updateData.categoryID as any)) {
+      // If categoryId is being updated, validate and convert it
+      if (updateData.categoryId && typeof updateData.categoryId === 'string') {
+        if (!ObjectId.isValid(updateData.categoryId as any)) {
           throw new Error("Invalid category ID format");
         }
-        updateData.categoryID = new ObjectId(updateData.categoryID as any);
+        updateData.categoryId = new ObjectId(updateData.categoryId as any);
       }
       
       const validatedData = QuestionSchema.partial().parse(updateData);
@@ -155,14 +155,14 @@ class QuestionModel {
     }
   }
 
-  static async countQuestionsByCategoryAndLevel(categoryID: string, level: string): Promise<number> {
+  static async countQuestionsByCategoryAndLevel(categoryId: string, level: string): Promise<number> {
     try {
-      if (!ObjectId.isValid(categoryID)) {
+      if (!ObjectId.isValid(categoryId)) {
         throw new Error("Invalid category ID format");
       }
       
       const count = await QuestionCollection.countDocuments({
-        categoryID: new ObjectId(categoryID),
+        categoryId: new ObjectId(categoryId),
         level: level
       });
       
