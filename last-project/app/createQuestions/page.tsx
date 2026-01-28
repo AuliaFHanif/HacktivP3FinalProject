@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import AdminProtection from "@/components/AdminProtection";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
 
 interface Question {
   _id?: string;
@@ -349,12 +348,15 @@ export default function BulkQuestionsPage() {
         <AdminSidebar activeTab={activeTab} onNavigate={handleNavigation} />
 
         <main className="flex-1 ml-64 p-8">
-          <AdminHeader
-            title="Create Questions"
-            description="Add interview questions individually or generate them in bulk"
-            isAdding={false}
-            onToggleAdd={() => {}}
-          />
+          {/* Custom Header for Create Questions */}
+          <div className="mb-10">
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Create Questions
+            </h1>
+            <p className="text-slate-500 text-sm">
+              Add interview questions individually or generate them in bulk
+            </p>
+          </div>
 
           {/* Content Section (Questions UI) */}
           <div className="max-w-5xl">
