@@ -1,26 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Swal from "sweetalert2";
 import {
-  Search,
-  MapPin,
   PlusCircle,
   Database,
-  CheckCircle,
   Loader2,
-  LayoutGrid,
   HelpCircle,
-  Layers,
-  Settings,
-  LogOut,
   Trash2,
   Send,
-  Plus,
 } from "lucide-react";
 import AdminProtection from "@/components/AdminProtection";
-import { logout } from "@/lib/auth";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 interface Question {
   _id?: string;
@@ -47,11 +40,19 @@ interface Category {
 
 export default function BulkQuestionsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("Questions");
+  const [activeTab, setActiveTab] = useState("Create Questions");
+
+  // Sync activeTab with current route
+  useEffect(() => {
+    if (pathname === "/createQuestions") {
+      setActiveTab("Create Questions");
+    }
+  }, [pathname]);
 
   // Form inputs
   const [categoryId, setCategoryId] = useState("");
@@ -64,14 +65,6 @@ export default function BulkQuestionsPage() {
   const [followUp, setFollowUp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [mode, setMode] = useState<"individual" | "bulk">("individual");
-
-  const menuItems = [
-    { name: "Categories", icon: LayoutGrid, path: "/categories" },
-    { name: "Questions", icon: HelpCircle, path: "/questions" },
-    { name: "Tiers", icon: Layers, path: "/tiers" },
-    { name: "Create Questions", icon: PlusCircle, path: "/createQuestions" },
-    { name: "Packages", icon: Plus, path: "/packages" },
-  ];
 
   const handleNavigation = (path: string, name: string) => {
     setActiveTab(name);
@@ -353,63 +346,15 @@ export default function BulkQuestionsPage() {
   return (
     <AdminProtection>
       <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
-        {/* --- SIDEBAR --- */}
-        <aside className="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full">
-          <div className="p-6 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">
-              S
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-800">
-              Seekers.
-            </span>
-          </div>
+        <AdminSidebar activeTab={activeTab} onNavigate={handleNavigation} />
 
-          <nav className="flex-1 px-4 py-4 space-y-1">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-4">
-              Main Menu
-            </div>
-            {menuItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleNavigation(item.path, item.name)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === item.name
-                    ? "bg-blue-50 text-blue-600 shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                }`}
-              >
-                <item.icon
-                  className={`w-5 h-5 ${activeTab === item.name ? "text-blue-600" : "text-slate-400"}`}
-                />
-                {item.name}
-              </button>
-            ))}
-          </nav>
-
-          <div className="p-4 border-t border-slate-100 space-y-1">
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition"
-            >
-              <LogOut className="w-5 h-5" /> Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* --- MAIN CONTENT AREA --- */}
         <main className="flex-1 ml-64 p-8">
-          {/* Header bar */}
-          <header className="flex justify-between items-center mb-10">
-            <div>
-              <h2 className="text-sm font-medium text-slate-400">
-                Dashboard / {activeTab}
-              </h2>
-              <h1 className="text-2xl font-bold text-slate-800">
-                Bulk Management
-              </h1>
-            </div>
-            
-          </header>
+          <AdminHeader
+            title="Create Questions"
+            description="Add interview questions individually or generate them in bulk"
+            isAdding={false}
+            onToggleAdd={() => {}}
+          />
 
           {/* Content Section (Questions UI) */}
           <div className="max-w-5xl">

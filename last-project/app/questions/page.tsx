@@ -7,7 +7,8 @@ import {
   Layers,
   RefreshCw,
   Search,
-  X
+  X,
+  Play
 } from "lucide-react";
 import AdminProtection from "@/components/AdminProtection";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -252,6 +253,20 @@ export default function QuestionsManagement() {
     setSearchQuery("");
   };
 
+  const handlePlayAudio = (audioUrl?: string) => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play();
+    } else {
+      Swal.fire({
+        icon: "info",
+        title: "No Audio Available",
+        text: "This question doesn't have an audio file yet.",
+        confirmButtonColor: "#3b82f6",
+      });
+    }
+  };
+
   return (
     <AdminProtection>
       <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -436,6 +451,15 @@ export default function QuestionsManagement() {
                           </div>
                         ) : (
                           <div className="flex gap-3 justify-end">
+                            <button 
+                              onClick={() => handlePlayAudio(q.audioUrl)}
+                              disabled={isSaving}
+                              className="text-green-600 text-xs font-bold hover:underline disabled:text-slate-300 disabled:cursor-not-allowed flex items-center gap-1"
+                              title="Play Audio"
+                            >
+                              <Play className="w-3.5 h-3.5" />
+                              Play
+                            </button>
                             <button 
                               onClick={() => handleEdit(q)}
                               disabled={isSaving}

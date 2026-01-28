@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, Trash2, Zap } from "lucide-react";
+import { Edit3, Trash2, Zap, Play } from "lucide-react";
 
 interface QuestionCardProps {
   id: string;
@@ -9,6 +9,7 @@ interface QuestionCardProps {
   level: string;
   type: string;
   followUp: boolean;
+  audioUrl?: string;
   onEdit: () => void;
   onDelete: () => void;
   onAudio?: () => void;
@@ -21,6 +22,7 @@ export default function QuestionCard({
   level,
   type,
   followUp,
+  audioUrl,
   onEdit,
   onDelete,
   onAudio,
@@ -38,6 +40,13 @@ export default function QuestionCard({
     closing: "bg-orange-100 text-orange-700 border-orange-200",
   };
 
+  const handlePlayAudio = () => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play();
+    }
+  };
+
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-lg transition-all">
       <div className="flex justify-between items-start mb-3">
@@ -50,6 +59,15 @@ export default function QuestionCard({
           <p className="text-sm text-slate-600 leading-relaxed">{content}</p>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition ml-3">
+          {audioUrl && (
+            <button
+              onClick={handlePlayAudio}
+              className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+              title="Play Audio"
+            >
+              <Play size={16} />
+            </button>
+          )}
           {onAudio && (
             <button
               onClick={onAudio}

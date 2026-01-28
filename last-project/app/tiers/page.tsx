@@ -214,6 +214,7 @@ export default function TierManagement() {
                       description: tier.description 
                     });
                     setIsAdding(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   onDelete={() => handleDelete(tier._id)}
                 />
