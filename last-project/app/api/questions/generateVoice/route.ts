@@ -49,7 +49,16 @@ async function uploadToCloudinary(buffer: Buffer): Promise<string> {
 
 export async function POST(request: Request) {
   try {
-    const { text } = await request.json();
+    const contentType = request.headers.get("content-type") || "";
+    let text = "";
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const formData = await request.formData();
+      text = formData.get("text")?.toString() || "";
+    } else {
+      const body = await request.json();
+      text = body?.text || "";
+    }
 
     if (!text) {
       return NextResponse.json(

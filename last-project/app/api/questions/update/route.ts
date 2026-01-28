@@ -3,12 +3,35 @@ import { NextResponse } from "next/server";
 
 export async function PUT(request: Request) {
     try {
-        const body = await request.json();
-        const { id, level, type, content, followUp, audioUrl } = body ?? {};
+        const contentType = request.headers.get("content-type") || "";
+        let id = "";
+        let level = "";
+        let type = "";
+        let content = "";
+        let followUp: boolean | string = "";
+        let audioUrl = "";
+
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+            const formData = await request.formData();
+            id = formData.get("id")?.toString() || "";
+            level = formData.get("level")?.toString() || "";
+            type = formData.get("type")?.toString() || "";
+            content = formData.get("content")?.toString() || "";
+            followUp = formData.get("followUp")?.toString() || "";
+            audioUrl = formData.get("audioUrl")?.toString() || "";
+        } else {
+            const body = await request.json();
+            id = body?.id || "";
+            level = body?.level || "";
+            type = body?.type || "";
+            content = body?.content || "";
+            followUp = body?.followUp || "";
+            audioUrl = body?.audioUrl || "";
+        }
 
         if (!id) {
             return NextResponse.json(
-                { success: false, message: "Missing required field: id" },
+                { message: "Missing required field: id" },
                 { status: 400 }
             );
         }
@@ -22,11 +45,11 @@ export async function PUT(request: Request) {
 
         await QuestionModel.updateQuestion(id, updateData);
         return NextResponse.json(
-            { success: true, message: `Question with ID '${id}' updated successfully!` },
+            { message: `Question with ID '${id}' updated successfully!` },
             { status: 200 }
         );
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.json({ success: false, message }, { status: 400 });
+        return NextResponse.json({ message }, { status: 400 });
     }
 }

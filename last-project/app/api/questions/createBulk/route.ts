@@ -1,10 +1,8 @@
 import QuestionModel from "@/db/models/QuestionModels";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 interface BulkQuestionInput {
   categoryID: string; // ObjectId string for the category
@@ -22,8 +20,8 @@ const VALID_LEVELS = ["junior", "mid", "senior"];
 const VALID_TYPES = ["intro", "core", "closing"];
 
 export async function generateBulkQuestions(input: BulkQuestionInput) {
-    if (!process.env.OPENAI_API_KEY) {
-        throw new Error("OpenAI API key is not configured.");
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error("Gemini API key is not configured.");
     }
     if (!input.categoryID || !input.level || !input.type) {
       throw new Error("Missing required fields: categoryID, level, type");
@@ -38,38 +36,34 @@ export async function generateBulkQuestions(input: BulkQuestionInput) {
   const { categoryID, level, type, count = 10 } = input;
 
   try {
-    // Call OpenAI API to generate questions
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert interviewer creating technical interview questions. Generate exactly ${count} unique interview questions based on the given parameters. Return ONLY a valid JSON array with no markdown formatting or code blocks.`,
-        },
-        {
-          role: "user",
-          content: `Generate ${count} interview questions with the following parameters:
-- Level: ${level}
-- Type: ${type}
+    // Initialize Gemini model
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-Return a JSON array of objects with this exact structure:
+    const prompt = `Anda adalah seorang pewawancara ahli yang sedang menyusun pertanyaan wawancara teknis. Buatlah tepat ${count} pertanyaan wawancara yang unik berdasarkan parameter berikut.
+
+Parameter:
+- Level: ${level}
+- Tipe: ${type}
+
+Kembalikan HANYA dalam bentuk array JSON yang valid tanpa format markdown, blok kode, atau teks tambahan. Gunakan struktur persis seperti ini:
 [
   {
-    "content": "question text here",
-    "followUp": true or false
+    "content": "teks pertanyaan di sini",
+    "followUp": true atau false
   }
 ]
 
-Make sure each question is unique, relevant to the level and type specified, and appropriate for a technical interview. The followUp field should be true if the question is designed to have follow-up questions.`,
-        },
-      ],
-    
-    });
+Pastikan setiap pertanyaan unik, relevan dengan level dan tipe yang ditentukan, serta sesuai untuk wawancara teknis. Field followUp harus bernilai true jika pertanyaan tersebut dirancang untuk memiliki pertanyaan lanjutan.
 
-    const responseContent = completion.choices[0]?.message?.content;
+Hasilkan ${count} pertanyaan sekarang:`;
+
+    // Call Gemini API
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const responseContent = response.text();
     
     if (!responseContent) {
-      throw new Error("No response from OpenAI");
+      throw new Error("No response from Gemini");
     }
 
     // Parse the response
@@ -83,7 +77,7 @@ Make sure each question is unique, relevant to the level and type specified, and
       
       generatedQuestions = JSON.parse(cleanedResponse);
     } catch (parseError) {
-      throw new Error(`Failed to parse OpenAI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+      throw new Error(`Failed to parse Gemini response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
 
     // Validate we got the right number of questions
@@ -91,37 +85,21 @@ Make sure each question is unique, relevant to the level and type specified, and
       throw new Error(`Expected ${count} questions but got ${generatedQuestions?.length || 0}`);
     }
 
-    // Create questions in database
-    const createdQuestions = [];
-    const errors = [];
-
-    for (let i = 0; i < generatedQuestions.length; i++) {
-      try {
-        const question = generatedQuestions[i];
-        const created = await QuestionModel.createQuestion(
-          categoryID,
-          level,
-          type,
-          question.content,
-          question.followUp
-          // audioUrl is omitted and will be added later
-        );
-        createdQuestions.push(created);
-      } catch (error) {
-        errors.push({
-          index: i,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          question: generatedQuestions[i],
-        });
-      }
-    }
+    // Return generated questions without inserting to database
+    // Questions will be inserted later via insertBulk endpoint when user submits
+    const questionsWithMetadata = generatedQuestions.map(q => ({
+      categoryID,
+      level,
+      type,
+      content: q.content,
+      followUp: q.followUp,
+    }));
 
     return {
       success: true,
-      created: createdQuestions.length,
+      generated: questionsWithMetadata.length,
       total: count,
-      questions: createdQuestions,
-      errors: errors.length > 0 ? errors : undefined,
+      questions: questionsWithMetadata,
     };
 
   } catch (error) {
@@ -132,9 +110,27 @@ Make sure each question is unique, relevant to the level and type specified, and
 // API route handler
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { categoryID, level, type, count: rawCount } = body ?? {};
-    const count = rawCount ? parseInt(rawCount, 10) : 10;
+    const contentType = request.headers.get("content-type") || "";
+    let categoryID = "";
+    let level = "";
+    let type = "";
+    let count = 10;
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const formData = await request.formData();
+      categoryID = formData.get("categoryID")?.toString() || "";
+      level = formData.get("level")?.toString() || "";
+      type = formData.get("type")?.toString() || "";
+      const countStr = formData.get("count")?.toString();
+      count = countStr ? parseInt(countStr, 10) : 10;
+    } else {
+      const body = await request.json();
+      categoryID = body?.categoryID || "";
+      level = body?.level || "";
+      type = body?.type || "";
+      const countStr = body?.count;
+      count = countStr ? parseInt(countStr, 10) : 10;
+    }
 
     if (!categoryID || !level || !type) {
       return NextResponse.json(

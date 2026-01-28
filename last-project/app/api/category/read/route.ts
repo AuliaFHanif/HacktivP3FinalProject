@@ -5,19 +5,14 @@ export async function GET() {
     try {
         const categories = await CategoryModel.getCategories();
         
-        const serializedCategories = categories.map(category => ({
-            ...category,
-            _id: category._id?.toString()
-        }));
-        
         return NextResponse.json(
-            { success: true, data: serializedCategories },
+            { categories },
             { status: 200 }
         );
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json(
-            { success: false, error: message },
+            { message: message },
             { status: 500 }
         );
     }

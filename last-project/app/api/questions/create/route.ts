@@ -1,23 +1,76 @@
 import QuestionModel from "@/db/models/QuestionModels";
+import CategoryModel from "@/db/models/CategoryModels";
 import { NextResponse } from "next/server";
+
+async function updateCategoryLevelIfReady(categoryID: string, level: string) {
+	try {
+		// Convert level names to match category schema (middle instead of mid)
+		const categoryLevelKey = level === "mid" ? "middle" : level;
+		
+		// Count questions for this category and level
+		const count = await QuestionModel.countQuestionsByCategoryAndLevel(categoryID, level);
+		
+		// If there are at least 15 questions, update category level
+		if (count >= 15) {
+			const category = await CategoryModel.getCategoryById(categoryID);
+			if (category) {
+				const updatedLevel = {
+					...category.level,
+					[categoryLevelKey]: true
+				};
+				await CategoryModel.updateCategory(categoryID, { level: updatedLevel });
+				console.log(`Category ${categoryID} level ${level} marked as ready (${count} questions found)`);
+			}
+		}
+	} catch (error) {
+		console.error(`Error updating category level: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		// Don't throw - this is a non-critical operation
+	}
+}
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { categoryID, level, type, content, followUp = false, audioUrl } = body ?? {};
+        const contentType = request.headers.get("content-type") || "";
+        let categoryID = "";
+        let level = "";
+        let type = "";
+        let content = "";
+        let followUp = false;
+        let audioUrl = null;
+
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+            const formData = await request.formData();
+            categoryID = formData.get("categoryID")?.toString() || "";
+            level = formData.get("level")?.toString() || "";
+            type = formData.get("type")?.toString() || "";
+            content = formData.get("content")?.toString() || "";
+            followUp = formData.get("followUp")?.toString() === "true" || false;
+            audioUrl = formData.get("audioUrl")?.toString() || "";
+        } else {
+            const body = await request.json();
+            categoryID = body?.categoryID || "";
+            level = body?.level || "";
+            type = body?.type || "";
+            content = body?.content || "";
+            followUp = body?.followUp || false;
+            audioUrl = body?.audioUrl || "";
+        }
 
         if (!categoryID || !level || !type || !content) {
             return NextResponse.json(
-                { success: false, message: "Missing required fields: categoryID, level, type, content" },
+                { message: "Missing required fields: categoryID, level, type, content" },
                 { status: 400 }
             );
         }
 
         await QuestionModel.createQuestion(categoryID, level, type, content, Boolean(followUp), audioUrl);
 
-        return NextResponse.json({ success: true, message: "Question created successfully!" }, { status: 201 });
+        // Check if category level should be marked as ready
+        await updateCategoryLevelIfReady(categoryID, level);
+
+        return NextResponse.json({ message: "Question created successfully!" }, { status: 201 });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.json({ success: false, message }, { status: 400 });
+        return NextResponse.json({ message }, { status: 400 });
     }
 }

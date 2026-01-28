@@ -9,7 +9,7 @@ export const QuestionSchema = Z.object({
   type: Z.string().min(1, "Type is required"),
   content: Z.string().min(1, "Content is required").max(1000, "Content cannot exceed 1000 characters"),
   followUp: Z.boolean().default(false),
-  audioUrl: Z.string().min(1, "Audio URL is required").optional(),
+  audioUrl: Z.string().optional(),
 });
 
 export type Question = Z.infer<typeof QuestionSchema>;
@@ -23,7 +23,7 @@ class QuestionModel {
     type: string,
     content: string,
     followUp: boolean = false,
-    audioUrl?: string
+    audioUrl?: string | null
   ): Promise<Question> {
     try {
       // Validate categoryID
@@ -152,6 +152,23 @@ class QuestionModel {
       return question;
     } catch (error) {
       throw new Error(`Failed to fetch question: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  static async countQuestionsByCategoryAndLevel(categoryID: string, level: string): Promise<number> {
+    try {
+      if (!ObjectId.isValid(categoryID)) {
+        throw new Error("Invalid category ID format");
+      }
+      
+      const count = await QuestionCollection.countDocuments({
+        categoryID: new ObjectId(categoryID),
+        level: level
+      });
+      
+      return count;
+    } catch (error) {
+      throw new Error(`Failed to count questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

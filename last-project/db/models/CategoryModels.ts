@@ -9,7 +9,7 @@ export const CategorySchema = Z.object({
   imgUrl: Z.string().min(1, "Image URL is required").max(300, "Image URL cannot exceed 300 characters"),
   level: Z.object({
     junior: Z.boolean().default(false),
-    mid: Z.boolean().default(false),
+    middle: Z.boolean().default(false),
     senior: Z.boolean().default(false)
   }),
   published: Z.boolean().default(false),
@@ -20,14 +20,20 @@ export type Category = Z.infer<typeof CategorySchema>;
 export const CategoryCollection = database.collection<Category>("categories");
 
 class CategoryModel {
-  static async createCategory(title: string, description: string, imgUrl: string): Promise<Category> {
+  static async createCategory(
+    title: string, 
+    description: string, 
+    imgUrl: string,
+    level?: { junior: boolean; middle: boolean; senior: boolean },
+    published?: boolean
+  ): Promise<Category> {
     try {
       const categoryData = CategorySchema.parse({
         title,
         description,
         imgUrl,
-        level: { junior: false, mid: false, senior: false },
-        published: false
+        level: level || { junior: false, middle: false, senior: false },
+        published: published ?? false
       });
       
       const result = await CategoryCollection.insertOne(categoryData);

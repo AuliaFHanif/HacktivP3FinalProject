@@ -9,5 +9,5 @@ if (!uri) {
 const client = new MongoClient(uri);
 const clientPromise = client.connect();
 
-export const database = client.db("P3_LAST_PROJECT_AuliaFHanif_DB");
+export const database = client.db("test");
 export { clientPromise };

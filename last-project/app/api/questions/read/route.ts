@@ -4,15 +4,10 @@ import { NextResponse } from "next/server";
 export async function GET() {
     try {
         const questions = await QuestionModel.getQuestions();
-        
-        const serializedQuestions = questions.map(question => ({
-            ...question,
-            _id: question._id?.toString(),
-            categoryID: question.categoryID?.toString()
-        }));
+    
         
         return NextResponse.json(
-            { success: true, data: serializedQuestions },
+            { questions },
             { status: 200 }
         );
     } catch (error) {

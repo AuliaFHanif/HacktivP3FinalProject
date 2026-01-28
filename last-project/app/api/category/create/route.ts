@@ -7,8 +7,13 @@ export async function POST(request: Request) {
         const title = formData.get("title") as string;
         const description = formData.get("description") as string;
         const imgUrl = formData.get("imgUrl") as string;
+        const levelStr = formData.get("level") as string;
+        const publishedStr = formData.get("published") as string;
 
-        await CategoryModel.createCategory(title, description, imgUrl);
+        const level = levelStr ? JSON.parse(levelStr) : { junior: false, middle: false, senior: false };
+        const published = publishedStr === "true";
+
+        await CategoryModel.createCategory(title, description, imgUrl, level, published);
         return NextResponse.json(
             { message: `Category '${title}' created successfully!` },
             { status: 201 }
