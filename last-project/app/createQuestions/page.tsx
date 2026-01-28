@@ -31,7 +31,7 @@ interface Category {
   imgUrl: string;
   level: {
     junior: boolean;
-    mid: boolean;
+    middle: boolean;
     senior: boolean;
   };
   published: boolean;
@@ -433,7 +433,7 @@ export default function BulkQuestionsPage() {
                     >
                       <option value="">Select Level...</option>
                       <option value="junior">Junior</option>
-                      <option value="mid">Mid</option>
+                      <option value="middle">Middle</option>
                       <option value="senior">Senior</option>
                     </select>
                   </div>
@@ -537,7 +537,7 @@ export default function BulkQuestionsPage() {
                     >
                       <option value="">Select Level...</option>
                       <option value="junior">Junior</option>
-                      <option value="mid">Mid</option>
+                      <option value="middle">Middle</option>
                       <option value="senior">Senior</option>
                     </select>
                   </div>
