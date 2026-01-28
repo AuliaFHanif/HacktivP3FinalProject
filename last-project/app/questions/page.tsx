@@ -362,26 +362,32 @@ export default function QuestionsManagement() {
                       <td className="px-6 py-4">
                         {editingId === q._id ? (
                           <div className="flex items-center gap-2 flex-wrap">
-                            <select
-                              value={editLevel}
-                              onChange={(e) => setEditLevel(e.target.value)}
-                              className="border border-slate-300 rounded px-2 py-1 text-xs"
-                            >
-                              <option value="">Select Level</option>
-                              <option value="junior">Junior</option>
-                              <option value="middle">Middle</option>
-                              <option value="senior">Senior</option>
-                            </select>
-                            <select
-                              value={editType}
-                              onChange={(e) => setEditType(e.target.value)}
-                              className="border border-slate-300 rounded px-2 py-1 text-xs"
-                            >
-                              <option value="">Select Type</option>
-                              <option value="intro">Intro</option>
-                              <option value="core">Core</option>
-                              <option value="closing">Closing</option>
-                            </select>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Level</span>
+                              <select
+                                value={editLevel}
+                                onChange={(e) => setEditLevel(e.target.value)}
+                                className="border border-slate-300 rounded px-2 py-1 text-xs"
+                              >
+                                <option value="">Select Level</option>
+                                <option value="junior">Junior</option>
+                                <option value="middle">Middle</option>
+                                <option value="senior">Senior</option>
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Type</span>
+                              <select
+                                value={editType}
+                                onChange={(e) => setEditType(e.target.value)}
+                                className="border border-slate-300 rounded px-2 py-1 text-xs"
+                              >
+                                <option value="">Select Type</option>
+                                <option value="intro">Intro</option>
+                                <option value="core">Core</option>
+                                <option value="closing">Closing</option>
+                              </select>
+                            </div>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 flex-wrap">
