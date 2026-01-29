@@ -16,7 +16,7 @@ interface GeneratedQuestion {
   followUp: boolean;
 }
 
-const VALID_LEVELS = ["junior", "mid", "senior"];
+const VALID_LEVELS = ["junior", "middle", "senior"];
 const VALID_TYPES = ["intro", "core", "closing"];
 
 export async function generateBulkQuestions(input: BulkQuestionInput) {
