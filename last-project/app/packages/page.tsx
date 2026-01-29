@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 import { 
   Package, 
   Plus, 
@@ -90,9 +91,22 @@ export default function PackageManagement() {
         setFormData({ id: "", name: "", type: "", tokens: "", price: "", description: "", features: "", popular: false });
         setIsAdding(false);
         fetchPackages();
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: formData.id ? "Package updated successfully!" : "Package created successfully!",
+          confirmButtonColor: "#2563eb",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       }
     } catch (error) {
-      alert("Action failed");
+      Swal.fire({
+        icon: "error",
+        title: "Action Failed",
+        text: "Failed to save package",
+        confirmButtonColor: "#2563eb",
+      });
     } finally {
       setLoading(false);
     }
@@ -100,17 +114,41 @@ export default function PackageManagement() {
 
   // 3. Handle Delete (DELETE)
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this package?")) return;
-    
-    const body = new FormData();
-    body.append("id", id);
-
-    try {
-      const res = await fetch("/api/packages/delete", { method: "DELETE", body });
-      if (res.ok) fetchPackages();
-    } catch (error) {
-      alert("Delete failed");
-    }
+    Swal.fire({
+      title: "Delete Package",
+      text: "Are you sure you want to delete this package?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const body = new FormData();
+          body.append("id", id);
+          const res = await fetch("/api/packages/delete", { method: "DELETE", body });
+          if (res.ok) {
+            fetchPackages();
+            Swal.fire({
+              icon: "success",
+              title: "Deleted",
+              text: "Package deleted successfully!",
+              confirmButtonColor: "#2563eb",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: "error",
+            title: "Delete Failed",
+            text: "Failed to delete package",
+            confirmButtonColor: "#2563eb",
+          });
+        }
+      }
+    });
   };
 
   return (

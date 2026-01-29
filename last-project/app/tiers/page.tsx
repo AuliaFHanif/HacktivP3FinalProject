@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 import { 
   Loader2, 
   DollarSign,
@@ -80,9 +81,22 @@ export default function TierManagement() {
         setFormData({ id: "", title: "", price: "", benefits: "", quota: "", description: "" });
         setIsAdding(false);
         fetchTiers();
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: formData.id ? "Tier updated successfully!" : "Tier created successfully!",
+          confirmButtonColor: "#0F172A",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       }
     } catch (error) {
-      alert("Action failed");
+      Swal.fire({
+        icon: "error",
+        title: "Action Failed",
+        text: "Failed to save tier",
+        confirmButtonColor: "#0F172A",
+      });
     } finally {
       setLoading(false);
     }
@@ -90,17 +104,41 @@ export default function TierManagement() {
 
   // 3. Handle Delete (DELETE)
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this tier?")) return;
-    
-    const body = new FormData();
-    body.append("id", id);
-
-    try {
-      const res = await fetch("/api/tiers/delete", { method: "DELETE", body });
-      if (res.ok) fetchTiers();
-    } catch (error) {
-      alert("Delete failed");
-    }
+    Swal.fire({
+      title: "Delete Tier",
+      text: "Are you sure you want to delete this tier?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const body = new FormData();
+          body.append("id", id);
+          const res = await fetch("/api/tiers/delete", { method: "DELETE", body });
+          if (res.ok) {
+            fetchTiers();
+            Swal.fire({
+              icon: "success",
+              title: "Deleted",
+              text: "Tier deleted successfully!",
+              confirmButtonColor: "#0F172A",
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: "error",
+            title: "Delete Failed",
+            text: "Failed to delete tier",
+            confirmButtonColor: "#0F172A",
+          });
+        }
+      }
+    });
   };
 
   return (

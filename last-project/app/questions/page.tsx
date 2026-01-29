@@ -458,7 +458,7 @@ export default function QuestionsManagement() {
                               title="Play Audio"
                             >
                               <Play className="w-3.5 h-3.5" />
-                              Play
+                              Play Audio
                             </button>
                             <button 
                               onClick={() => handleEdit(q)}
